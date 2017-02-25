@@ -7,8 +7,4 @@ public class DriveButton : BaseButtonClass {
 
 
 
-    public override void ButtonClick()
-    {
-        fileExplorer.DisplayDirectoriesAndFiles(path);
-    }
 }
