@@ -5,19 +5,24 @@ using UnityEngine.UI;
 
 public abstract class BaseButtonClass : MonoBehaviour {
 
+    [SerializeField]
+    protected Text nameDisplay;
     protected FileExplorer fileExplorer;
     protected string path;
+    
 
-    public virtual void InitializeButton(FileExplorer fileExplorer, string path, string name, Sprite image)
+
+    public virtual void InitializeButton(FileExplorer fileExplorer, string path, string name)
     {
         this.fileExplorer = fileExplorer;
         this.path = path;
-        GetComponentInChildren<Text>().text = name;
+        nameDisplay.text = name;
         GetComponent<Button>().onClick.AddListener(()=> ButtonClick());
-
-        Image[] sprites = gameObject.GetComponentsInChildren<Image>();
-        sprites[1].sprite = image;
+        transform.localScale = new Vector3(1, 1, 1);
     }
 
-    public abstract void ButtonClick();
+    public virtual void ButtonClick()
+    {
+        fileExplorer.DisplayDirectoriesAndFiles(path);
+    }
 }
