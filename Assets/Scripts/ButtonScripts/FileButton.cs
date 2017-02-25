@@ -7,6 +7,6 @@ public class FileButton : DirectoryButton {
 
     public override void ButtonClick()
     {
-        Debug.Log("You clicked on file " + this.gameObject.name);
+        //Debug.Log("You clicked on file " + this.gameObject.name);
     }
 }
