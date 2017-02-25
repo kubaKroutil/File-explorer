@@ -14,33 +14,18 @@ public class FileExplorer : MonoBehaviour {
     private GameObject buttonPrefab;
     [SerializeField]
     private Text deviceButtontext;
+    [SerializeField]
+    private Sprite[] buttonSprites;
 
     private void Start()
     {
         SetThisDeviceButton();
         CreateDriveButtons();
 
-
-       
-       
-
-        
-
         string[] dirs = Directory.GetDirectories(@"D:\FILMY\", "*",SearchOption.AllDirectories);
-        //string[] dirs = Directory.GetDirectories(@"C:\My Sample Path\", "*", SearchOption.AllDirectories);
-
-        //Debug.Log(dirs.Length.ToString());
 
         //DirectoryInfo dirInfo = new DirectoryInfo(@"D:\FILMY\");
         //Debug.Log(dirInfo.CreationTime.ToString("d/M/yyyy"));
-
-
-
-        //foreach (string dir in dirs)
-        //{
-        //    Debug.Log(dir);
-        //}
-
     }
 
     private void CreateDriveButtons()
@@ -49,7 +34,7 @@ public class FileExplorer : MonoBehaviour {
         {
             GameObject newButton = (GameObject)Instantiate(buttonPrefab, driveContent);
             newButton.transform.localScale = new Vector3(1, 1, 1);
-            newButton.AddComponent<DriveButton>().InitializeButton(this, drive, drive);
+            newButton.AddComponent<DriveButton>().InitializeButton(this, drive, drive,buttonSprites[0]);
         }
     }
 
