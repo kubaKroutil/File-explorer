@@ -3,15 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public abstract class BaseButtonClass : MonoBehaviour {
+public class BaseButtonClass : MonoBehaviour {
 
     [SerializeField]
     protected Text nameDisplay;
     protected FileExplorer fileExplorer;
     protected string path;
     
-
-
     public virtual void InitializeButton(FileExplorer fileExplorer, string path, string name)
     {
         this.fileExplorer = fileExplorer;
