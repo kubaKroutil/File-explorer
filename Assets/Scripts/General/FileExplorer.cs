@@ -25,11 +25,19 @@ public class FileExplorer : MonoBehaviour {
     [SerializeField]
     private string currentPath = "";
 
+    //make list for sorting
+    public List<DirectoryInfo> dirInfoList = new List<DirectoryInfo>();
+    public List<FileInfo> fileInfoList = new List<FileInfo>();
+
+
     private void Start()
     {
         deviceButtontext.text = SystemInfo.deviceName;
         CreateDeviceButtonsInDriversView();
+        CreateDeviceButtonsInDirectoryView();
         DisplayPath(currentPath);
+        //dirInfoList = new List<DirectoryInfo>();
+        //fileInfoList = new List<FileInfo>();
     }
 
     //create drive buttons under the device button, this is done only one, in Start
@@ -45,8 +53,8 @@ public class FileExplorer : MonoBehaviour {
     //create drive buttons in directory view, activated by device button
     public void CreateDeviceButtonsInDirectoryView()
     {
-        ClearContent(directoryContent);
-        ClearContent(pathContent);
+        ClearContent(directoryContent,true);
+        ClearContent(pathContent,false);
         CreateDeviceButtonInPathView();
         foreach (string drive in Directory.GetLogicalDrives())
         {
@@ -61,7 +69,7 @@ public class FileExplorer : MonoBehaviour {
     {
         currentPath = path;
         DisplayPath(path);
-        ClearContent(directoryContent);
+        ClearContent(directoryContent,true);
         try
         {
             // Get subdirectory list and create buttons
@@ -74,6 +82,7 @@ public class FileExplorer : MonoBehaviour {
                     if (dirs != null)
                     {
                         DirectoryInfo dirInfo = new DirectoryInfo(directory);
+                        dirInfoList.Add(dirInfo);
                         GameObject newButton = (GameObject)Instantiate(buttonPrefabs[1], directoryContent);
                         newButton.GetComponent<DirectoryButton>().InitializeButton(this, dirInfo.FullName + @"\", dirInfo.Name, dirInfo.CreationTime);
                     }
@@ -94,6 +103,7 @@ public class FileExplorer : MonoBehaviour {
             foreach (string file in files)
             {
                 FileInfo fileInfo = new FileInfo(file);
+                fileInfoList.Add(fileInfo);
                 GameObject newButton = (GameObject)Instantiate(buttonPrefabs[2], directoryContent);
                 newButton.GetComponent<FileButton>().InitializeButton(this, fileInfo.FullName + @"\", fileInfo.Name, fileInfo.CreationTime);
             }
@@ -104,8 +114,14 @@ public class FileExplorer : MonoBehaviour {
         }
     }
 
-    private void ClearContent(Transform content)
+    public void ClearContent(Transform content, bool clearLists)
     {
+
+        if (clearLists)
+        {
+            dirInfoList.Clear();
+            fileInfoList.Clear();
+        }
         // delete everything in directory view
         foreach (Transform item in content)
         {
@@ -136,7 +152,7 @@ public class FileExplorer : MonoBehaviour {
     public void DisplayPath(string path)
     {
         //destroy all buttons in path before refresh
-        ClearContent(pathContent);
+        ClearContent(pathContent,false);
         // device button always be here...
         CreateDeviceButtonInPathView();
         if (string.IsNullOrEmpty(currentPath))return;
@@ -180,8 +196,7 @@ public class FileExplorer : MonoBehaviour {
 
     private void SearchDirectoriesAndFiles(string path,string searchPattern)
     {
-
-
+       
         if (path=="")
         {
             //search all drives... it take a while
@@ -198,6 +213,7 @@ public class FileExplorer : MonoBehaviour {
             foreach (string directory in dirs)
             {
                 DirectoryInfo dirInfo = new DirectoryInfo(directory);
+                dirInfoList.Add(dirInfo);
                 GameObject newButton = (GameObject)Instantiate(buttonPrefabs[1], directoryContent);
                 newButton.GetComponent<DirectoryButton>().InitializeButton(this, dirInfo.FullName + @"\", dirInfo.Name, dirInfo.CreationTime);
             }
@@ -206,6 +222,7 @@ public class FileExplorer : MonoBehaviour {
             foreach (string file in files)
             {
                 FileInfo fileInfo = new FileInfo(file);
+                fileInfoList.Add(fileInfo);
                 GameObject newButton = (GameObject)Instantiate(buttonPrefabs[2], directoryContent);
                 newButton.GetComponent<FileButton>().InitializeButton(this, fileInfo.FullName + @"\", fileInfo.Name, fileInfo.CreationTime);
             }
@@ -244,7 +261,7 @@ public class FileExplorer : MonoBehaviour {
     // called with search button
     public void DisplaySearching()
     {
-        ClearContent(directoryContent);
+        ClearContent(directoryContent,true);
         SearchDirectoriesAndFiles(currentPath, "*" +searchText.text + "*");
     }
      
