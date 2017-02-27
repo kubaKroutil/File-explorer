@@ -10,19 +10,14 @@ public class MyDropDown : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
     [SerializeField]
     private FileExplorer fileExplorer;
-
     [SerializeField]
     private GameObject dirPrefab;
-
     [SerializeField]
     private GameObject filePrefab;
-
     [SerializeField]
     private Transform directoryContent;
-
-
-    public RectTransform container;
-    private float speed = 10f;
+    [SerializeField]
+    private RectTransform container;
 
     private void Start()
     {
@@ -45,83 +40,50 @@ public class MyDropDown : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         else container.localScale = new Vector3(container.localScale.x, 0, container.localScale.y);
     }
 
+    //SORTING BUTTONS
+    //get infos from lists, then clear them, coz dirs and files will be added again in button creater
+
     public void SortByCreationDateDesc()
     {
         DirectoryInfo[] dirInfos = fileExplorer.dirInfoList.OrderByDescending(p => p.CreationTime).ToArray();
-
-        fileExplorer.ClearContent(directoryContent, false);
-        foreach (DirectoryInfo dirInfo in dirInfos)
-        {
-            GameObject newButton = (GameObject)Instantiate(dirPrefab, directoryContent);
-            newButton.GetComponent<DirectoryButton>().InitializeButton(fileExplorer, dirInfo.FullName + @"\", dirInfo.Name, dirInfo.CreationTime);
-        }
-
         FileInfo[] fileInfos = fileExplorer.fileInfoList.OrderByDescending(p => p.CreationTime).ToArray();
-
-        foreach (FileInfo fileInfo in fileInfos)
-        {
-            GameObject newButton = (GameObject)Instantiate(filePrefab, directoryContent);
-            newButton.GetComponent<FileButton>().InitializeButton(fileExplorer, fileInfo.FullName + @"\", fileInfo.Name, fileInfo.CreationTime);
-        }
+        CreateButtonsAndClearContent(dirInfos, fileInfos);
     }
 
     public void SortByCreationDateAsc()
     {
         DirectoryInfo[] dirInfos = fileExplorer.dirInfoList.OrderBy(p => p.CreationTime).ToArray();
-
-        fileExplorer.ClearContent(directoryContent, false);
-        foreach (DirectoryInfo dirInfo in dirInfos)
-        {
-            GameObject newButton = (GameObject)Instantiate(dirPrefab, directoryContent);
-            newButton.GetComponent<DirectoryButton>().InitializeButton(fileExplorer, dirInfo.FullName + @"\", dirInfo.Name, dirInfo.CreationTime);
-        }
-
         FileInfo[] fileInfos = fileExplorer.fileInfoList.OrderBy(p => p.CreationTime).ToArray();
-
-        foreach (FileInfo fileInfo in fileInfos)
-        {
-            GameObject newButton = (GameObject)Instantiate(filePrefab, directoryContent);
-            newButton.GetComponent<FileButton>().InitializeButton(fileExplorer, fileInfo.FullName + @"\", fileInfo.Name, fileInfo.CreationTime);
-        }
+        CreateButtonsAndClearContent(dirInfos, fileInfos);
     }
 
     public void SortByNameAsc()
     {
         DirectoryInfo[] dirInfos = fileExplorer.dirInfoList.OrderBy(p => p.Name).ToArray();
-
-        fileExplorer.ClearContent(directoryContent, false);
-        foreach (DirectoryInfo dirInfo in dirInfos)
-        {
-            GameObject newButton = (GameObject)Instantiate(dirPrefab, directoryContent);
-            newButton.GetComponent<DirectoryButton>().InitializeButton(fileExplorer, dirInfo.FullName + @"\", dirInfo.Name, dirInfo.CreationTime);
-        }
-
         FileInfo[] fileInfos = fileExplorer.fileInfoList.OrderBy(p => p.Name).ToArray();
-
-        foreach (FileInfo fileInfo in fileInfos)
-        {
-            GameObject newButton = (GameObject)Instantiate(filePrefab, directoryContent);
-            newButton.GetComponent<FileButton>().InitializeButton(fileExplorer, fileInfo.FullName + @"\", fileInfo.Name, fileInfo.CreationTime);
-        }
+        CreateButtonsAndClearContent(dirInfos, fileInfos);
     }
 
     public void SortByNameDesc()
     {
         DirectoryInfo[] dirInfos = fileExplorer.dirInfoList.OrderByDescending(p => p.Name).ToArray();
+        FileInfo[] fileInfos = fileExplorer.fileInfoList.OrderByDescending(p => p.Name).ToArray();
+        CreateButtonsAndClearContent(dirInfos, fileInfos);
+    }
 
-        fileExplorer.ClearContent(directoryContent, false);
+    private void CreateButtonsAndClearContent(DirectoryInfo[] dirInfos, FileInfo[] fileInfos)
+    {
+        fileExplorer.ClearContent(directoryContent, true);
+        ToggleDropDown(false);
+
         foreach (DirectoryInfo dirInfo in dirInfos)
         {
-            GameObject newButton = (GameObject)Instantiate(dirPrefab, directoryContent);
-            newButton.GetComponent<DirectoryButton>().InitializeButton(fileExplorer, dirInfo.FullName + @"\", dirInfo.Name, dirInfo.CreationTime);
+            fileExplorer.buttonCreater.CreateDirectoryButton(directoryContent, fileExplorer, dirInfo.FullName);
         }
-
-        FileInfo[] fileInfos = fileExplorer.fileInfoList.OrderByDescending(p => p.Name).ToArray();
 
         foreach (FileInfo fileInfo in fileInfos)
         {
-            GameObject newButton = (GameObject)Instantiate(filePrefab, directoryContent);
-            newButton.GetComponent<FileButton>().InitializeButton(fileExplorer, fileInfo.FullName + @"\", fileInfo.Name, fileInfo.CreationTime);
+            fileExplorer.buttonCreater.CreateFileButton(directoryContent, fileExplorer, fileInfo.FullName);
         }
     }
 }

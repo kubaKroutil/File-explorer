@@ -4,7 +4,6 @@ using UnityEngine;
 using System.IO;
 using UnityEngine.UI;
 using System;
-using System.Security.AccessControl;
 
 public class FileExplorer : MonoBehaviour {
 
@@ -22,46 +21,34 @@ public class FileExplorer : MonoBehaviour {
     private Text deviceButtontext;
     [SerializeField]
     private Scrollbar verticalDirectoryScrollBar;
-    [SerializeField]
+    
     private string currentPath = "";
-
-    //make list for sorting
+    public ButtonCreater buttonCreater;
+    //make lists for sorting
     public List<DirectoryInfo> dirInfoList = new List<DirectoryInfo>();
     public List<FileInfo> fileInfoList = new List<FileInfo>();
 
+    private void Awake()
+    {
+        buttonCreater = GetComponent<ButtonCreater>();
+    }
 
     private void Start()
     {
+        // update device button name and create drive buttons in drive view and directory view
         deviceButtontext.text = SystemInfo.deviceName;
-        CreateDeviceButtonsInDriversView();
+        buttonCreater.CreateDriveButtons(driveContent, this);
         CreateDeviceButtonsInDirectoryView();
         DisplayPath(currentPath);
-        //dirInfoList = new List<DirectoryInfo>();
-        //fileInfoList = new List<FileInfo>();
     }
-
-    //create drive buttons under the device button, this is done only one, in Start
-    private void CreateDeviceButtonsInDriversView()
-    {
-        foreach (string drive in Directory.GetLogicalDrives())
-        {
-            GameObject newButton = (GameObject)Instantiate(buttonPrefabs[0], driveContent);
-            newButton.GetComponent<DriveButton>().InitializeButton(this, drive, drive);
-        }
-    }
-
+    
     //create drive buttons in directory view, activated by device button
     public void CreateDeviceButtonsInDirectoryView()
     {
         ClearContent(directoryContent,true);
         ClearContent(pathContent,false);
-        CreateDeviceButtonInPathView();
-        foreach (string drive in Directory.GetLogicalDrives())
-        {
-            GameObject newButton = (GameObject)Instantiate(buttonPrefabs[0], directoryContent);
-            newButton.GetComponent<DriveButton>().InitializeButton(this, drive, drive);
-            newButton.GetComponentInChildren<Text>().alignment = TextAnchor.MiddleLeft;
-        }
+        buttonCreater.CreateDeviceButtonInPathView(pathContent, this);
+        buttonCreater.CreateDriveButtons(directoryContent, this);
         currentPath = "";
     }
 
@@ -70,59 +57,32 @@ public class FileExplorer : MonoBehaviour {
         currentPath = path;
         DisplayPath(path);
         ClearContent(directoryContent,true);
-        try
+        // Get subdirectory list and create buttons
+        string[] directories = Directory.GetDirectories(path);
+        foreach (string directory in directories)
         {
-            // Get subdirectory list and create buttons
-            string[] directories = Directory.GetDirectories(path);
-            foreach (string directory in directories)
+            if (HaveAccess(directory))
             {
-                try
-                {   //check if you have access
-                    string[] dirs = Directory.GetDirectories(directory);
-                    if (dirs != null)
-                    {
-                        DirectoryInfo dirInfo = new DirectoryInfo(directory);
-                        dirInfoList.Add(dirInfo);
-                        GameObject newButton = (GameObject)Instantiate(buttonPrefabs[1], directoryContent);
-                        newButton.GetComponent<DirectoryButton>().InitializeButton(this, dirInfo.FullName + @"\", dirInfo.Name, dirInfo.CreationTime);
-                    }
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    Debug.Log(ex);
-                }
-                catch (Exception ex)
-                {
-                    Debug.Log("General exception: " + ex);
-                }
-
-            }
-
-            // Get file list and create buttons
-            string[] files = Directory.GetFiles(path);
-            foreach (string file in files)
-            {
-                FileInfo fileInfo = new FileInfo(file);
-                fileInfoList.Add(fileInfo);
-                GameObject newButton = (GameObject)Instantiate(buttonPrefabs[2], directoryContent);
-                newButton.GetComponent<FileButton>().InitializeButton(this, fileInfo.FullName + @"\", fileInfo.Name, fileInfo.CreationTime);
+                buttonCreater.CreateDirectoryButton(directoryContent, this, directory);
             }
         }
-        catch (Exception ex)
+        // Get file list and create buttons
+        string[] files = Directory.GetFiles(path);
+        foreach (string file in files)
         {
-            Debug.Log("Display dirs and files exception: "+ ex);
+            buttonCreater.CreateFileButton(directoryContent, this, file);
         }
     }
 
     public void ClearContent(Transform content, bool clearLists)
     {
-
+        //clear lists for sorting
         if (clearLists)
         {
             dirInfoList.Clear();
             fileInfoList.Clear();
         }
-        // delete everything in directory view
+        // delete everything in content
         foreach (Transform item in content)
         {
             Destroy(item.gameObject);
@@ -133,7 +93,7 @@ public class FileExplorer : MonoBehaviour {
 
     public void LevelUpDirectory()
     {
-        //Check if you are already in top directory (this computer)
+        //Check if you are already in top directory (this computer or device...)
         if ( string.IsNullOrEmpty(currentPath)) return;
         //Check if you are in root direction ( C,D,...)
         if (currentPath == Path.GetPathRoot(currentPath))
@@ -144,7 +104,6 @@ public class FileExplorer : MonoBehaviour {
         //Remove last "\" so you can use Directory.Getparent
         if (currentPath[currentPath.Length - 1] == '\\')
             currentPath = currentPath.Remove(currentPath.Length - 1, 1);
-
         //display parent
         DisplayDirectoriesAndFiles(Directory.GetParent(currentPath).FullName);
     }
@@ -153,21 +112,21 @@ public class FileExplorer : MonoBehaviour {
     {
         //destroy all buttons in path before refresh
         ClearContent(pathContent,false);
-        // device button always be here...
-        CreateDeviceButtonInPathView();
-        if (string.IsNullOrEmpty(currentPath))return;
+        //this button always be here
+        buttonCreater.CreateDeviceButtonInPathView(pathContent, this);
+        if (string.IsNullOrEmpty(currentPath)) return;
 
         //Check if you are in root
         if (currentPath == Path.GetPathRoot(currentPath))
         {
-            GameObject newButton = (GameObject)Instantiate(buttonPrefabs[3], pathContent);
-            newButton.GetComponent<BaseButtonClass>().InitializeButton(this, currentPath, currentPath);
+            buttonCreater.CreatePathButton(currentPath, pathContent, this);
             return;
         }
-        //DIR INFO PRIMO DO TRIDY
+        //Search path if you are not in root:
         Stack<string> parentPaths = new Stack<string>();
         parentPaths.Push(path);
         string dirPath = path;
+        //while you are not in root, add parents to stack
         while (dirPath != Path.GetPathRoot(dirPath))
         {
             DirectoryInfo dirInfo = new DirectoryInfo(dirPath);
@@ -176,27 +135,11 @@ public class FileExplorer : MonoBehaviour {
 
         }
         //create buttons in top path panel
-        foreach (string name in parentPaths)
-        {
-            DirectoryInfo dirInfo = new DirectoryInfo(name);
-            GameObject newButton = (GameObject)Instantiate(buttonPrefabs[3], pathContent);
-
-            //check if dir is root, coz they need different parameters in "constructor"
-            if (name != Path.GetPathRoot(name)) newButton.GetComponent<BaseButtonClass>().InitializeButton(this, @dirInfo.FullName + @"\", dirInfo.Name);         
-            else newButton.GetComponent<BaseButtonClass>().InitializeButton(this, name, name);
-        }
-    }
-
-    private void CreateDeviceButtonInPathView()
-    {
-        GameObject newButton = (GameObject)Instantiate(buttonPrefabs[3], pathContent);
-        newButton.GetComponent<Button>().onClick.AddListener(() => CreateDeviceButtonsInDirectoryView());
-        newButton.GetComponentInChildren<Text>().text = SystemInfo.deviceName;
+        buttonCreater.CreatePathButtons(pathContent, this, parentPaths);
     }
 
     private void SearchDirectoriesAndFiles(string path,string searchPattern)
     {
-       
         if (path=="")
         {
             //search all drives... it take a while
@@ -205,56 +148,47 @@ public class FileExplorer : MonoBehaviour {
                 SearchDirectoriesAndFiles(drive, searchPattern);
             }
         }
-        
-        try
-        {
-            // Get subdirectory list and create buttons
+            // search for match in directories
             string[] dirs = Directory.GetDirectories(path, searchPattern);
             foreach (string directory in dirs)
             {
-                DirectoryInfo dirInfo = new DirectoryInfo(directory);
-                dirInfoList.Add(dirInfo);
-                GameObject newButton = (GameObject)Instantiate(buttonPrefabs[1], directoryContent);
-                newButton.GetComponent<DirectoryButton>().InitializeButton(this, dirInfo.FullName + @"\", dirInfo.Name, dirInfo.CreationTime);
+                buttonCreater.CreateDirectoryButton(directoryContent, this, directory);
             }
-
+            // search for match in files
             string[] files = Directory.GetFiles(path, searchPattern);
             foreach (string file in files)
             {
-                FileInfo fileInfo = new FileInfo(file);
-                fileInfoList.Add(fileInfo);
-                GameObject newButton = (GameObject)Instantiate(buttonPrefabs[2], directoryContent);
-                newButton.GetComponent<FileButton>().InitializeButton(this, fileInfo.FullName + @"\", fileInfo.Name, fileInfo.CreationTime);
+                buttonCreater.CreateFileButton(directoryContent, this, file);
             }
 
             string[] directories = Directory.GetDirectories(path);
+            // if you have access, search in child directories
             foreach (string dir in directories)
             {
-                try
-                {   //check if you have access
-                    string[] dirs5 = Directory.GetDirectories(dir);
-                    if (dirs5 != null)
-                    {
-                        SearchDirectoriesAndFiles(dir, searchPattern);
-                    }
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    Debug.Log(ex);
-                }
-                catch (Exception ex)
-                {
-                    Debug.Log("General exception: " + ex);
-                }
+                if(HaveAccess(dir)) SearchDirectoriesAndFiles(dir, searchPattern);
             }
+    }
+
+    public bool HaveAccess(string path)
+    {
+        try
+        {   //check if you have access
+            string[] dirs = Directory.GetDirectories(path);
+            if (dirs != null)
+            {
+                return true;
+            }
+            else return false;
         }
         catch (UnauthorizedAccessException ex)
         {
             Debug.Log(ex);
+            return false;
         }
         catch (Exception ex)
         {
             Debug.Log("General exception: " + ex);
+            return false;
         }
     }
 
@@ -264,5 +198,4 @@ public class FileExplorer : MonoBehaviour {
         ClearContent(directoryContent,true);
         SearchDirectoriesAndFiles(currentPath, "*" +searchText.text + "*");
     }
-     
 }
