@@ -7,6 +7,11 @@ using System;
 
 public class FileExplorer : MonoBehaviour {
 
+    //make lists for sorting
+    public List<DirectoryInfo> dirInfoList = new List<DirectoryInfo>();
+    public List<FileInfo> fileInfoList = new List<FileInfo>();
+    public ButtonCreater ButtonCreator { get; private set; }
+    public string currentPath { get; private set; }
     [SerializeField]
     private Transform driveContent;
     [SerializeField]
@@ -22,22 +27,16 @@ public class FileExplorer : MonoBehaviour {
     [SerializeField]
     private Scrollbar verticalDirectoryScrollBar;
     
-    private string currentPath = "";
-    public ButtonCreater buttonCreater;
-    //make lists for sorting
-    public List<DirectoryInfo> dirInfoList = new List<DirectoryInfo>();
-    public List<FileInfo> fileInfoList = new List<FileInfo>();
-
     private void Awake()
     {
-        buttonCreater = GetComponent<ButtonCreater>();
+        ButtonCreator = GetComponent<ButtonCreater>();
     }
 
     private void Start()
     {
         // update device button name and create drive buttons in drive view and directory view
         deviceButtontext.text = SystemInfo.deviceName;
-        buttonCreater.CreateDriveButtons(driveContent, this);
+        ButtonCreator.CreateDriveButtons(driveContent, this);
         CreateDeviceButtonsInDirectoryView();
         DisplayPath(currentPath);
     }
@@ -47,11 +46,12 @@ public class FileExplorer : MonoBehaviour {
     {
         ClearContent(directoryContent,true);
         ClearContent(pathContent,false);
-        buttonCreater.CreateDeviceButtonInPathView(pathContent, this);
-        buttonCreater.CreateDriveButtons(directoryContent, this);
+        ButtonCreator.CreateDeviceButtonInPathView(pathContent, this);
+        ButtonCreator.CreateDriveButtons(directoryContent, this);
         currentPath = "";
     }
 
+    // display all directories and files in directory view
     public void DisplayDirectoriesAndFiles(string path)
     {
         currentPath = path;
@@ -63,14 +63,14 @@ public class FileExplorer : MonoBehaviour {
         {
             if (HaveAccess(directory))
             {
-                buttonCreater.CreateDirectoryButton(directoryContent, this, directory);
+                ButtonCreator.CreateDirectoryButton(directoryContent, this, directory);
             }
         }
         // Get file list and create buttons
         string[] files = Directory.GetFiles(path);
         foreach (string file in files)
         {
-            buttonCreater.CreateFileButton(directoryContent, this, file);
+            ButtonCreator.CreateFileButton(directoryContent, this, file);
         }
     }
 
@@ -113,13 +113,13 @@ public class FileExplorer : MonoBehaviour {
         //destroy all buttons in path before refresh
         ClearContent(pathContent,false);
         //this button always be here
-        buttonCreater.CreateDeviceButtonInPathView(pathContent, this);
+        ButtonCreator.CreateDeviceButtonInPathView(pathContent, this);
         if (string.IsNullOrEmpty(currentPath)) return;
 
         //Check if you are in root
         if (currentPath == Path.GetPathRoot(currentPath))
         {
-            buttonCreater.CreatePathButton(currentPath, pathContent, this);
+            ButtonCreator.CreatePathButton(currentPath, pathContent, this);
             return;
         }
         //Search path if you are not in root:
@@ -135,7 +135,7 @@ public class FileExplorer : MonoBehaviour {
 
         }
         //create buttons in top path panel
-        buttonCreater.CreatePathButtons(pathContent, this, parentPaths);
+        ButtonCreator.CreatePathButtons(pathContent, this, parentPaths);
     }
 
     private void SearchDirectoriesAndFiles(string path,string searchPattern)
@@ -152,13 +152,13 @@ public class FileExplorer : MonoBehaviour {
             string[] dirs = Directory.GetDirectories(path, searchPattern);
             foreach (string directory in dirs)
             {
-                buttonCreater.CreateDirectoryButton(directoryContent, this, directory);
+                ButtonCreator.CreateDirectoryButton(directoryContent, this, directory);
             }
             // search for match in files
             string[] files = Directory.GetFiles(path, searchPattern);
             foreach (string file in files)
             {
-                buttonCreater.CreateFileButton(directoryContent, this, file);
+                ButtonCreator.CreateFileButton(directoryContent, this, file);
             }
 
             string[] directories = Directory.GetDirectories(path);
@@ -192,7 +192,7 @@ public class FileExplorer : MonoBehaviour {
         }
     }
 
-    // called with search button
+    // called in search button
     public void DisplaySearching()
     {
         ClearContent(directoryContent,true);

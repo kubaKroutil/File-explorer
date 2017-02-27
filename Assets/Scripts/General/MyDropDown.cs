@@ -78,12 +78,12 @@ public class MyDropDown : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
         foreach (DirectoryInfo dirInfo in dirInfos)
         {
-            fileExplorer.buttonCreater.CreateDirectoryButton(directoryContent, fileExplorer, dirInfo.FullName);
+            fileExplorer.ButtonCreator.CreateDirectoryButton(directoryContent, fileExplorer, dirInfo.FullName);
         }
 
         foreach (FileInfo fileInfo in fileInfos)
         {
-            fileExplorer.buttonCreater.CreateFileButton(directoryContent, fileExplorer, fileInfo.FullName);
+            fileExplorer.ButtonCreator.CreateFileButton(directoryContent, fileExplorer, fileInfo.FullName);
         }
     }
 }

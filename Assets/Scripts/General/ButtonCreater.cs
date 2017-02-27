@@ -16,7 +16,7 @@ public class ButtonCreater : MonoBehaviour {
     private GameObject pathButtonPrefab;
 
     //DEVICE BUTTON
-    //create drive buttons under the device button
+    //create drive buttons under the device button(Drive view) or in directory view
     public void CreateDriveButtons(Transform contentParent, FileExplorer fileExplorer)
     {
         foreach (string drive in Directory.GetLogicalDrives())
@@ -27,6 +27,7 @@ public class ButtonCreater : MonoBehaviour {
     }
 
     //DIRECTORIES AND FILES BUTTONS
+    //create directories and files in directory view
     public void CreateDirectoryButton(Transform contentParent, FileExplorer fileExplorer, string directory)
     {
         DirectoryInfo dirInfo = new DirectoryInfo(directory);
